@@ -1,0 +1,17 @@
+body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    position: relative;
+}
+
+.ui {
+    position: fixed;
+    top: 10%;
+    left: 3%;
+    z-index: 9999;
+}
+
+li {
+    list-style: none;
+}

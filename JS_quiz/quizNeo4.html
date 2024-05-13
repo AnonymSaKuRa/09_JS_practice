@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>JSクイズ④</title>
+</head>
+
+<body>
+    <form>
+        <label for="postal-code">〒 <input type="text" name="postal-code" id="postal-code" value="4500002" /></label>
+        <button type="button">住所表示</button>
+    </form>
+    <div class="result">
+        <dl>
+            <dt>住所</dt>
+            <dd></dd>
+        </dl>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script>
+    //こちらのコードのみを送ってください。
+    const btn = document.querySelector("button");
+    const dd = document.querySelector("dd");
+
+    btn.addEventListener("click", () => {
+        const value = document.querySelector("input").value;
+        const url = `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${value}`;
+
+        fetch(url)
+            .then(function (response) {
+                if (response.status !== 200) {
+                    console.log("問題がありました。Status Code:" + response.status);
+                    return;
+                }
+                // Examine the text in the response
+                response.json().then(function (data) {
+                    console.log(data);
+                    dd.innerText = data.results[0].address1 + data.results[0].address2 + data.results[0].address3;
+                });
+            })
+            .catch(function (err) {
+                console.log("Fetch Error:", err);
+            });
+    });
+</script>
+
+</html>

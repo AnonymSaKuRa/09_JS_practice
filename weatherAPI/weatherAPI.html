@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天気予報アプリ</title>
+    <link rel="stylesheet" href="./style/style.css">
+</head>
+
+<body>
+    <div class="ui">
+        <h1>天気予報アプリ</h1>
+        <button>表示</button>
+        <ul>
+            <li></li>
+        </ul>
+    </div>
+
+    <script src="./js/weathercode.js"></script>
+    <script type="module">
+        import * as THREE from "https://cdn.skypack.dev/three@0.132";
+        import OrbitControls from "https://cdn.skypack.dev/threejs-orbit-controls";
+        import Stats from "https://cdn.skypack.dev/stats.js.fps";
+        import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
+
+        //UIデバッグ
+        const gui = new GUI();
+
+        //FPSデバッグ
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.body.appendChild(stats.dom);
+
+        //サイズ
+        const size = {
+            w: window.innerWidth,
+            h: window.innerHeight,
+        };
+
+        //シーン
+        const scene = new THREE.Scene();
+
+        //カメラ
+        const camera = new THREE.PerspectiveCamera(75, size.w / size.h, 0.1, 100);
+        camera.position.set(0, 1, 5);
+        scene.add(camera);
+
+        //ライト
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        gui.add(ambientLight, "intensity", 0, 1, 0.01).name("ambientLight");
+
+        // 特定の方向から照らすライト(日光的な感じ)
+        const directionalLight = new THREE.DirectionalLight(0xfcc753, 0.5);
+        scene.add(directionalLight);
+        gui.add(directionalLight, "intensity", 0, 1, 0.01).name("directionalLight");
+        directionalLight.position.set(1, 0.5, 0);
+
+        //マテリアル
+        const material = new THREE.MeshStandardMaterial();
+
+        // 天気関連
+        const codeNums = [
+            { 愛知県: 230000 },
+            { 岐阜県: 210000 },
+            { 三重県: 240000 },
+            { 静岡県: 220000 }
+        ];
+        const weekUrl = `https://www.jma.go.jp/bosai/forecast/data/forecast/${codeNums[0]["愛知県"]}.json`;
+        const url = `https://www.jma.go.jp/bosai/forecast/data/overview_forecast/${codeNums[0]["愛知県"]}.json`;
+
+        fetch(weekUrl)
+            .then(function (response) {
+                if (response.status !== 200) {
+                    console.log("問題がありました。Status Code:" + response.status);
+                    return;
+                }
+
+                response.json().then(function (data) {
+                    console.log(data);
+                    const li = document.querySelector("li");
+                    li.innerHTML = data[0].timeSeries[0].areas[0].weatherCodes;
+                    const cube = new THREE.Mesh(
+                        new THREE.BoxGeometry(2, data[0].timeSeries[0].areas[0].weatherCodes[0] / 100, 0.75),
+                        material
+                    );
+                    scene.add(cube);
+                });
+            })
+            .catch(function (err) {
+                console.log("Fetch Error:", err);
+            });
+
+        // オブジェクト
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 32, 32),
+            material
+        );
+        sphere.position.set(1.5, 2);
+
+        const cube2 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.75, 2, 0.75),
+            material
+        );
+        cube2.position.set(2, 0);
+
+        const cube3 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.75, 2, 0.75),
+            material
+        );
+        cube3.position.set(-2, 0);
+
+        scene.add(sphere, cube2, cube3);
+
+        //レンダラー
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(size.w, size.h);
+        document.body.appendChild(renderer.domElement);
+
+        //コントロール
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.1;
+
+        //アニメーション
+        const animate = () => {
+            stats.begin();
+            controls.update();
+            renderer.render(scene, camera);
+            stats.end();
+
+            requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        //リサイズ
+        const onWindowResize = () => {
+            size.w = window.innerWidth;
+            size.h = window.innerHeight;
+            renderer.setSize(size.w, size.h);
+
+            camera.aspect = size.w / size.h;
+            camera.updateProjectionMatrix();
+        };
+
+        window.addEventListener("resize", onWindowResize);
+    </script>
+</body>
+
+</html>
