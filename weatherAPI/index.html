@@ -10,8 +10,7 @@
 
 <body>
     <div class="ui">
-        <h1>天気予報アプリ</h1>
-        <button>表示</button>
+        <h1>天気予報アプリ(岐阜県)</h1>
         <ul>
             <li></li>
         </ul>
@@ -25,12 +24,12 @@
         import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
 
         //UIデバッグ
-        const gui = new GUI();
+        // const gui = new GUI();
 
         //FPSデバッグ
         const stats = new Stats();
         stats.showPanel(0);
-        document.body.appendChild(stats.dom);
+        // document.body.appendChild(stats.dom);
 
         //サイズ
         const size = {
@@ -43,21 +42,30 @@
 
         //カメラ
         const camera = new THREE.PerspectiveCamera(75, size.w / size.h, 0.1, 100);
-        camera.position.set(0, 1, 5);
+        camera.position.set(0, 1, 7);
         scene.add(camera);
 
         //ライト
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
-        gui.add(ambientLight, "intensity", 0, 1, 0.01).name("ambientLight");
+        // gui.add(ambientLight, "intensity", 0, 1, 0.01).name("ambientLight");
 
         // 特定の方向から照らすライト(日光的な感じ)
         const directionalLight = new THREE.DirectionalLight(0xfcc753, 0.5);
         scene.add(directionalLight);
-        gui.add(directionalLight, "intensity", 0, 1, 0.01).name("directionalLight");
+        // gui.add(directionalLight, "intensity", 0, 1, 0.01).name("directionalLight");
         directionalLight.position.set(1, 0.5, 0);
 
-        //マテリアル
+        // マテリアルの色
+        // 猛暑日
+        const colorHeat = new THREE.Color(0xff0000);
+        // 真夏日
+        const colorSummer = new THREE.Color(0xee7800);
+        // 普通日
+        const colorNormal = new THREE.Color(0xa0d8ef);
+        // 真冬日
+        const colorWinter = new THREE.Color(0xebecf1);
+
         const material = new THREE.MeshStandardMaterial();
 
         // 天気関連
@@ -67,8 +75,8 @@
             { 三重県: 240000 },
             { 静岡県: 220000 }
         ];
-        const weekUrl = `https://www.jma.go.jp/bosai/forecast/data/forecast/${codeNums[0]["愛知県"]}.json`;
-        const url = `https://www.jma.go.jp/bosai/forecast/data/overview_forecast/${codeNums[0]["愛知県"]}.json`;
+
+        const weekUrl = `https://www.jma.go.jp/bosai/forecast/data/forecast/${codeNums[1]["岐阜県"]}.json`;
 
         fetch(weekUrl)
             .then(function (response) {
@@ -78,40 +86,57 @@
                 }
 
                 response.json().then(function (data) {
+                    // 最高気温
+                    const tempsMaxUpper = data[1].timeSeries[1].areas[0].tempsMaxUpper[1];
+
+                    if (tempsMaxUpper >= 35) {
+                        material["color"]["r"] = 1;
+                        material["color"]["g"] = 0;
+                        material["color"]["b"] = 0;
+                    } else if (tempsMaxUpper >= 30) {
+                        material["color"]["r"] = 0.9333333333333333;
+                        material["color"]["g"] = 0.47058823529411764;
+                        material["color"]["b"] = 0;
+                    } else if (tempsMaxUpper < 0) {
+                        material["color"]["r"] = 0.9215686274509803;
+                        material["color"]["g"] = 0.9254901960784314;
+                        material["color"]["b"] = 0.9450980392156862;
+                    } else {
+                        material["color"]["r"] = 0.6274509803921569;
+                        material["color"]["g"] = 0.8470588235294118;
+                        material["color"]["b"] = 0.9372549019607843;
+                    }
+
                     console.log(data);
                     const li = document.querySelector("li");
-                    li.innerHTML = data[0].timeSeries[0].areas[0].weatherCodes;
-                    const cube = new THREE.Mesh(
-                        new THREE.BoxGeometry(2, data[0].timeSeries[0].areas[0].weatherCodes[0] / 100, 0.75),
+                    li.innerHTML = `最高気温：${data[1].timeSeries[1].areas[0].tempsMaxUpper[1]}℃`;
+
+                    const body = document.querySelector("body");
+                    body.style.background = `url(https://www.jma.go.jp/bosai/forecast/img/${weathercode[data[0].timeSeries[0].areas[0].weatherCodes[0]][0]}) no-repeat center/cover`;
+                    console.log(weathercode[data[0].timeSeries[0].areas[0].weatherCodes[0]][0]);
+
+                    const box = new THREE.Mesh(
+                        new THREE.BoxGeometry(1, data[0].timeSeries[0].areas[0].weatherCodes[0] / 70, 0.75),
                         material
                     );
-                    scene.add(cube);
+
+                    const box2 = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.75, data[0].timeSeries[0].areas[0].weatherCodes[0] / 70, 0.75),
+                        material
+                    );
+                    box2.position.set(2, 0);
+
+                    const box3 = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.75, data[0].timeSeries[0].areas[0].weatherCodes[0] / 70, 0.75),
+                        material
+                    );
+                    box3.position.set(-2, 0);
+                    scene.add(box, box2, box3);
                 });
             })
             .catch(function (err) {
                 console.log("Fetch Error:", err);
             });
-
-        // オブジェクト
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 32, 32),
-            material
-        );
-        sphere.position.set(1.5, 2);
-
-        const cube2 = new THREE.Mesh(
-            new THREE.BoxGeometry(0.75, 2, 0.75),
-            material
-        );
-        cube2.position.set(2, 0);
-
-        const cube3 = new THREE.Mesh(
-            new THREE.BoxGeometry(0.75, 2, 0.75),
-            material
-        );
-        cube3.position.set(-2, 0);
-
-        scene.add(sphere, cube2, cube3);
 
         //レンダラー
         const renderer = new THREE.WebGLRenderer({ alpha: true });
