@@ -6,7 +6,8 @@ description: "このWebサイトは、Webデザイナーになるためのポー
 
 <!doctype html>
 <html lang="ja">
-<head><meta charset="UTF-8">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=…">
   <title>About</title>
 </head>
